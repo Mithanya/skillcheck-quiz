@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>SkillCheck · Interactive Quiz</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
+      background: #F1F5F9;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .quiz-card {
+      max-width: 680px;
+      width: 100%;
+      background: #FFFFFF;
+      border-radius: 1.5rem;
+      box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .quiz-header {
+      background: #0F172A;
+      padding: 1.2rem 2rem;
+    }
+    .quiz-header h1 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: white;
+      letter-spacing: -0.02em;
+    }
+    .quiz-header p {
+      color: #94A3B8;
+      font-size: 0.8rem;
+      margin-top: 0.2rem;
+    }
+
+    .progress-area {
+      padding: 0.8rem 2rem;
+      background: #F8FAFE;
+      border-bottom: 1px solid #E2E8F0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .question-counter {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #1E293B;
+    }
+    .score-badge {
+      background: #E6F4EF;
+      padding: 0.25rem 0.8rem;
+      border-radius: 2rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #2D7A6E;
+    }
+
+    .question-area {
+      padding: 2rem 2rem 1rem 2rem;
+    }
+    .question-text {
+      font-size: 1.1rem;
+      font-weight: 550;
+      color: #0F172A;
+      line-height: 1.4;
+      margin-bottom: 1.5rem;
+    }
+
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.7rem 1rem;
+      background: #F8FAFE;
+      border: 1px solid #E2E8F0;
+      border-radius: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .option:hover {
+      background: #F1F5F9;
+      border-color: #CBD5E1;
+    }
+    .option.selected {
+      background: #E6F4EF;
+      border-color: #2D7A6E;
+    }
+    .option-radio {
+      width: 1rem;
+      height: 1rem;
+      border-radius: 50%;
+      border: 2px solid #94A3B8;
+      background: white;
+      flex-shrink: 0;
+    }
+    .option.selected .option-radio {
+      border-color: #2D7A6E;
+      background: #2D7A6E;
+      box-shadow: inset 0 0 0 2px white;
+    }
+    .option-text {
+      font-size: 0.9rem;
+      font-weight: 470;
+      color: #1E293B;
+    }
+
+    .warning {
+      font-size: 0.7rem;
+      color: #D97706;
+      margin-top: 0.2rem;
+      min-height: 1.5rem;
+    }
+
+    .nav-buttons {
+      padding: 0.5rem 2rem 2rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .btn {
+      padding: 0.6rem 1.5rem;
+      border-radius: 2rem;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+    .btn-prev {
+      background: #E2E8F0;
+      color: #1E293B;
+    }
+    .btn-prev:hover:not(:disabled) {
+      background: #CBD5E1;
+    }
+    .btn-next {
+      background: #2D7A6E;
+      color: white;
+    }
+    .btn-next:hover:not(:disabled) {
+      background: #236B60;
+      transform: translateY(-1px);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .result-area {
+      padding: 2rem;
+      text-align: center;
+    }
+    .result-area h2 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #0F172A;
+      margin-bottom: 0.5rem;
+    }
+    .final-score {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #2D7A6E;
+      margin: 1rem 0;
+    }
+    .feedback {
+      color: #5B6F82;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+    .restart-btn {
+      background: #0F172A;
+      color: white;
+      padding: 0.6rem 1.5rem;
+      border-radius: 2rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+    .restart-btn:hover {
+      background: #1E293B;
+    }
+
+    @media (max-width: 550px) {
+      body { padding: 1rem; }
+      .quiz-header, .progress-area, .question-area, .nav-buttons {
+        padding-left: 1.2rem;
+        padding-right: 1.2rem;
+      }
+      .question-text { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="quiz-card">
+  <div class="quiz-header">
+    <h1>SkillCheck</h1>
+    <p>knowledge validation · multiple choice</p>
+  </div>
+  <div id="quizDynamic"></div>
+</div>
+
+<script>
+  // ---------- QUIZ DATA (5 questions) ----------
+  const questions = [
+    {
+      text: "What does HTML stand for?",
+      options: [
+        "Hyper Text Markup Language",
+        "High Tech Modern Link",
+        "Hyper Transfer Markup Language",
+        "Home Tool Markup Language"
+      ],
+      correct: 0
+    },
+    {
+      text: "Which CSS property is used to change the background color?",
+      options: ["color", "bgcolor", "background-color", "background"],
+      correct: 2
+    },
+    {
+      text: "Which JavaScript method is used to write to the console?",
+      options: ["console.write()", "console.log()", "console.print()", "console.output()"],
+      correct: 1
+    },
+    {
+      text: "What does the 'box-shadow' CSS property do?",
+      options: [
+        "Adds a shadow inside the element",
+        "Adds a shadow outside the element",
+        "Creates a 3D box effect",
+        "Only works on images"
+      ],
+      correct: 1
+    },
+    {
+      text: "Which HTML tag is used to link an external CSS file?",
+      options: ["<style>", "<link>", "<css>", "<script>"],
+      correct: 1
+    }
+  ];
+
+  const total = questions.length;
+  let currentIndex = 0;
+  let userAnswers = new Array(total).fill(null);
+  let quizCompleted = false;
+
+  const container = document.getElementById("quizDynamic");
+
+  function computeScore() {
+    let score = 0;
+    for (let i = 0; i < total; i++) {
+      if (userAnswers[i] !== null && userAnswers[i] === questions[i].correct) score++;
+    }
+    return score;
+  }
+
+  function render() {
+    if (quizCompleted) {
+      renderResult();
+    } else {
+      renderQuestion();
+    }
+  }
+
+  function renderQuestion() {
+    const q = questions[currentIndex];
+    const selected = userAnswers[currentIndex];
+    let optionsHtml = '';
+    q.options.forEach((opt, idx) => {
+      const isSelected = (selected === idx);
+      const selectedClass = isSelected ? 'selected' : '';
+      optionsHtml += `
+        <div class="option ${selectedClass}" data-opt="${idx}">
+          <div class="option-radio"></div>
+          <div class="option-text">${escapeHtml(opt)}</div>
+        </div>
+      `;
+    });
+
+    const isFirst = (currentIndex === 0);
+    const isLast = (currentIndex === total - 1);
+
+    const html = `
+      <div class="progress-area">
+        <div class="question-counter">Question ${currentIndex + 1} of ${total}</div>
+        <div class="score-badge">Score: ${computeScore()} / ${total}</div>
+      </div>
+      <div class="question-area">
+        <div class="question-text">${escapeHtml(q.text)}</div>
+        <div class="options-list" id="optionsList">
+          ${optionsHtml}
+        </div>
+        <div class="warning" id="warningMsg"></div>
+      </div>
+      <div class="nav-buttons">
+        <button class="btn btn-prev" id="prevBtn" ${isFirst ? 'disabled' : ''}>Previous</button>
+        <button class="btn btn-next" id="nextBtn">${isLast ? 'Finish' : 'Next'}</button>
+      </div>
+    `;
+
+    container.innerHTML = html;
+
+    // attach option click handlers
+    document.querySelectorAll('.option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        const idx = parseInt(opt.dataset.opt);
+        selectAnswer(currentIndex, idx);
+        const warn = document.getElementById('warningMsg');
+        if (warn) warn.innerText = '';
+      });
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', goPrev);
+    document.getElementById('nextBtn').addEventListener('click', goNext);
+  }
+
+  function selectAnswer(qIdx, optIdx) {
+    userAnswers[qIdx] = optIdx;
+    if (!quizCompleted && currentIndex === qIdx) {
+      renderQuestion();
+    }
+  }
+
+  function goPrev() {
+    if (currentIndex > 0) {
+      currentIndex--;
+      renderQuestion();
+    }
+  }
+
+  function goNext() {
+    const warn = document.getElementById('warningMsg');
+    if (userAnswers[currentIndex] === null) {
+      if (warn) warn.innerText = 'Please select an answer before proceeding.';
+      return;
+    }
+    if (warn) warn.innerText = '';
+
+    if (currentIndex === total - 1) {
+      quizCompleted = true;
+      render();
+    } else {
+      currentIndex++;
+      renderQuestion();
+    }
+  }
+
+  function renderResult() {
+    const score = computeScore();
+    const percent = (score / total) * 100;
+    let feedback = '';
+    if (percent === 100) feedback = 'Perfect! Excellent knowledge.';
+    else if (percent >= 80) feedback = 'Great job! You have a strong grasp.';
+    else if (percent >= 60) feedback = 'Good effort. Review the topics and try again.';
+    else feedback = 'Keep learning. Take the quiz again to improve.';
+
+    let summary = '';
+    for (let i = 0; i < total; i++) {
+      const isCorrect = (userAnswers[i] === questions[i].correct);
+      summary += `
+        <div style="margin-bottom:0.5rem; padding:0.4rem; background:#F8FAFE; border-radius:0.5rem; text-align:left;">
+          <strong>Q${i+1}:</strong> ${questions[i].text}<br>
+          <span style="color:${isCorrect ? '#2D7A6E' : '#D97706'}">
+            ${isCorrect ? 'Correct' : 'Incorrect'}
+          </span>
+        </div>
+      `;
+    }
+
+    const html = `
+      <div class="result-area">
+        <h2>Quiz Completed</h2>
+        <div class="final-score">${score} / ${total}</div>
+        <div class="feedback">${feedback}</div>
+        <div style="max-height:250px; overflow-y:auto; margin-bottom:1rem;">
+          ${summary}
+        </div>
+        <button class="restart-btn" id="restartQuiz">Restart Quiz</button>
+      </div>
+    `;
+    container.innerHTML = html;
+    document.getElementById('restartQuiz').addEventListener('click', () => {
+      currentIndex = 0;
+      userAnswers = new Array(total).fill(null);
+      quizCompleted = false;
+      render();
+    });
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+
+  render();
+</script>
+</body>
+</html>
